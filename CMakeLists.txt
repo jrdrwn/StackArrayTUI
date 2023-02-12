@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.24)
-project(StackArrayTUI)
 
 # --- Fetch FTXUI --------------------------------------------------------------
 include(FetchContent)
@@ -15,9 +14,14 @@ if(NOT ftxui_POPULATED)
     add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 # ------------------------------------------------------------------------------
-set(CMAKE_CXX_STANDARD 17)
 
-add_executable(StackArrayTUI main.cpp scroller.cpp)
+project(StackArrayTUI)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++")
+
+add_executable(StackArrayTUI main.cpp scroller.cpp scroller.hpp)
+
 target_link_libraries(StackArrayTUI
         PRIVATE ftxui::screen
         PRIVATE ftxui::dom
