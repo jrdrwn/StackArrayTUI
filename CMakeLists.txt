@@ -18,7 +18,7 @@ endif()
 project(StackArrayTUI)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++")
+set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 add_executable(StackArrayTUI main.cpp scroller.cpp scroller.hpp)
 
