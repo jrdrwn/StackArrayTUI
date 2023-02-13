@@ -1,7 +1,6 @@
 #include "ftxui/component/component.hpp"  // for Button, Horizontal, Renderer
 #include "ftxui/component/screen_interactive.hpp"  // for ScreenInteractive
 #include "ftxui/dom/elements.hpp"  // for gauge, separator, text, vbox, operator|, Element, border
-#include "scroller.hpp"
 #include "string"  // for operator+, to_string
 
 #define MAX 5
@@ -9,89 +8,158 @@
 using namespace std;
 using namespace ftxui;
 
-struct Mahasiswa {
-  string nim, nama;
-} mahasiswa;
-Mahasiswa stack[MAX];
-int top = 0;
+struct Data {
+  Color::Palette256 warna;
+  int id;
+};
 
-Elements items = {};
-string response;
+Data s_left[MAX] = {
+    {Color::DeepSkyBlue3, 3},
+    {Color::Yellow1, 1},
+};
+int top_left = 2;
+Elements items_left = {};
 
-bool isfull() { return top == MAX; }
+Data s_center[MAX] = {
+    {Color::DeepSkyBlue3, 3},
+};
+int top_center = 1;
+Elements items_center = {};
 
-bool isempty() { return top == 0; }
+Data s_right[MAX] = {
+    {Color::DeepSkyBlue3, 3},
+    {Color::Green3Bis, 2},
+    {Color::Yellow1, 1},
+};
+int top_right = 3;
+Elements items_right = {};
 
-void push() {
-  if (isfull()) {
+string response = "Selamat Datang!";
+
+Data data_state = {Color::LightCyan3, -1};
+
+bool isfull(int top) { return top == MAX; }
+
+bool isempty(int top) { return top == 0; }
+
+void push(Data stack[], int &top, Data data) {
+  if (isfull(top)) {
     response = "SUDAH PENUH";
     return;
   }
-  stack[top] = mahasiswa;
-  mahasiswa = {};
+  stack[top] = data;
   top++;
+  data_state = {Color::LightCyan3, -1};
   response = "DIISI";
 }
 
-void pop() {
-  if (isempty()) {
+void pop(Data stack[], int &top) {
+  if (isempty(top)) {
     response = "KOSONG!";
     return;
   }
   response = "TERPOP!";
   top--;
+  data_state = stack[top];
 }
 
-void display() {
+void display(Data stack[], int *top, Elements &items) {
   items = {};
-  for (int i = top - 1; i >= 0; --i) {
-    items.push_back(
-        window(text(to_string(i + 1) + ((i + 1 == top) ? " - TOP" : "")),
-               vbox({text(stack[i].nim) | color(Color::Yellow3),
-                     text(stack[i].nama) | color(Color::Green3)})));
+  for (int i = *top - 1; i >= 0; --i) {
+    items.push_back(vbox({text(L"")}) | bgcolor(stack[i].warna));
   }
 }
 
 int main() {
-  auto input_nim = Input(&mahasiswa.nim, "22xxxx") | size(WIDTH, EQUAL, 19);
-  auto input_nama =
-      Input(&mahasiswa.nama, "Fulan bin Fulan") | size(WIDTH, EQUAL, 18);
-  auto input_box_nim = Renderer(
-      input_nim, [&] { return hbox(text("NIM: "), input_nim->Render()); });
-  auto input_box_nama = Renderer(
-      input_nama, [&] { return hbox(text("Nama: "), input_nama->Render()); });
-  auto form = Container::Vertical({input_box_nim, input_box_nama});
+  auto state = Renderer([] {
+    return hbox(text(response) | center | xflex) | yframe | border |
+           color(data_state.warna);
+  });
 
-  auto stack_c =
-      Renderer([&] { return vbox(items) | color(Color::Aquamarine3); });
+  FlexboxConfig flexbox_opt;
+  flexbox_opt.direction = FlexboxConfig::Direction::Column;
+  flexbox_opt.justify_content = FlexboxConfig::JustifyContent::FlexEnd;
+  flexbox_opt.align_content = FlexboxConfig::AlignContent::Stretch;
 
-  auto buttons = Container::Horizontal({Button("Push",
-                                               [&] {
-                                                 if (mahasiswa.nim.empty() ||
-                                                     mahasiswa.nama.empty()) {
-                                                   response =
-                                                       "NIM/NAMA HARUS DIISI!";
-                                                   return;
-                                                 }
-                                                 push();
-                                                 display();
-                                               }),
-                                        Button("Pop",
-                                               [&] {
-                                                 pop();
-                                                 display();
-                                               }) |
-                                            color(Color::RedLight)}) |
-                 center;
+  auto make_buttons = [](auto on_push, auto on_pop) {
+    return Container::Horizontal(
+               {Button("Push", on_push),
+                Button("Pop", on_pop) | color(Color::RedLight)}) |
+           center;
+  };
+  auto make_app_child = [](auto actions, auto view, auto c) {
+    return Container::Vertical(
+               {actions, Renderer([&] { return separator(); }), view}) |
+           border | color(c) | size(HEIGHT, EQUAL, 11);
+  };
+
+  display(s_left, &top_left, items_left);
+  auto left_stack_view =
+      Renderer([&] { return flexbox(items_left, flexbox_opt); });
+  auto left_buttons = make_buttons(
+      [&] {
+        if (data_state.warna != Color::LightCyan3) {
+          push(s_left, top_left, data_state);
+          display(s_left, &top_left, items_left);
+        }
+      },
+      [&] {
+        if (data_state.warna == Color::LightCyan3 && data_state.id == -1) {
+          pop(s_left, top_left);
+          display(s_left, &top_left, items_left);
+        }
+      });
+  auto left = make_app_child(left_buttons, left_stack_view, Color::Yellow1);
+
+  display(s_center, &top_center, items_center);
+  auto center_stack_view =
+      Renderer([&] { return flexbox(items_center, flexbox_opt); });
+  auto center_buttons = make_buttons(
+      [&] {
+        if (data_state.warna != Color::LightCyan3) {
+          push(s_center, top_center, data_state);
+          display(s_center, &top_center, items_center);
+        }
+      },
+      [&] {
+        if (data_state.warna == Color::LightCyan3 && data_state.id == -1) {
+          pop(s_center, top_center);
+          display(s_center, &top_center, items_center);
+        }
+      });
+  auto _center =
+      make_app_child(center_buttons, center_stack_view, Color::DeepSkyBlue3);
+
+  display(s_right, &top_right, items_right);
+  auto right_stack_view =
+      Renderer([&] { return flexbox(items_right, flexbox_opt); });
+  auto right_buttons = make_buttons(
+      [&] {
+        if (data_state.warna != Color::LightCyan3) {
+          push(s_right, top_right, data_state);
+          display(s_right, &top_right, items_right);
+        }
+      },
+      [&] {
+        if (data_state.warna == Color::LightCyan3 && data_state.id == -1) {
+          pop(s_right, top_right);
+          display(s_right, &top_right, items_right);
+        }
+      });
+  auto right =
+      make_app_child(right_buttons, right_stack_view, Color::Green3Bis);
 
   auto response_box = Renderer([&] { return hbox({text(response)}); });
-  auto app =
-      Container::Vertical(
-          {response_box | inverted, Renderer([&] { return separator(); }), form,
-           Renderer([&] { return separator(); }), buttons, Scroller(stack_c)}) |
-      center | yframe | border;
+  auto stack = Container::Horizontal({left, _center, right});
+  auto screen = ScreenInteractive::Fullscreen();
+  auto app = Container::Vertical({
+                 state,
+                 stack,
+                 Button("KELUAR", screen.ExitLoopClosure()) |
+                     color(Color::Red3) | center,
+             }) |
+             center | frame | borderEmpty;
 
-  auto screen = ScreenInteractive::FitComponent();
   screen.Loop(app);
 
   return 0;

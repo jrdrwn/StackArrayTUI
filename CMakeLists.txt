@@ -20,7 +20,7 @@ project(StackArrayTUI)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
 
-add_executable(StackArrayTUI main.cpp scroller.cpp scroller.hpp)
+add_executable(StackArrayTUI main.cpp)
 
 target_link_libraries(StackArrayTUI
         PRIVATE ftxui::screen
