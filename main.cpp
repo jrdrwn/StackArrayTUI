@@ -4,6 +4,10 @@
 #include "string"  // for operator+, to_string
 
 #define MAX 5
+#define C1 Color::Yellow1
+#define C2 Color::Green3Bis
+#define C3 Color::DeepSkyBlue3
+#define CSTATE Color::LightCyan3
 
 using namespace std;
 using namespace ftxui;
@@ -14,29 +18,29 @@ struct Data {
 };
 
 Data s_left[MAX] = {
-    {Color::DeepSkyBlue3, 3},
-    {Color::Yellow1, 1},
+    {C3, 3},
+    {C1, 1},
 };
 int top_left = 2;
 Elements items_left = {};
 
 Data s_center[MAX] = {
-    {Color::DeepSkyBlue3, 3},
+    {C3, 3},
 };
 int top_center = 1;
 Elements items_center = {};
 
 Data s_right[MAX] = {
-    {Color::DeepSkyBlue3, 3},
-    {Color::Green3Bis, 2},
-    {Color::Yellow1, 1},
+    {C3, 3},
+    {C2, 2},
+    {C1, 1},
 };
 int top_right = 3;
 Elements items_right = {};
 
 string response = "Selamat Datang!";
 
-Data data_state = {Color::LightCyan3, -1};
+Data data_state = {CSTATE, -1};
 
 bool isfull(int top) { return top == MAX; }
 
@@ -49,7 +53,7 @@ void push(Data stack[], int &top, Data data) {
   }
   stack[top] = data;
   top++;
-  data_state = {Color::LightCyan3, -1};
+  data_state = {CSTATE, -1};
   response = "DIISI";
 }
 
@@ -98,56 +102,54 @@ int main() {
       Renderer([&] { return flexbox(items_left, flexbox_opt); });
   auto left_buttons = make_buttons(
       [&] {
-        if (data_state.warna != Color::LightCyan3) {
+        if (data_state.warna != CSTATE) {
           push(s_left, top_left, data_state);
           display(s_left, &top_left, items_left);
         }
       },
       [&] {
-        if (data_state.warna == Color::LightCyan3 && data_state.id == -1) {
+        if (data_state.warna == CSTATE && data_state.id == -1) {
           pop(s_left, top_left);
           display(s_left, &top_left, items_left);
         }
       });
-  auto left = make_app_child(left_buttons, left_stack_view, Color::Yellow1);
+  auto left = make_app_child(left_buttons, left_stack_view, C1);
 
   display(s_center, &top_center, items_center);
   auto center_stack_view =
       Renderer([&] { return flexbox(items_center, flexbox_opt); });
   auto center_buttons = make_buttons(
       [&] {
-        if (data_state.warna != Color::LightCyan3) {
+        if (data_state.warna != CSTATE) {
           push(s_center, top_center, data_state);
           display(s_center, &top_center, items_center);
         }
       },
       [&] {
-        if (data_state.warna == Color::LightCyan3 && data_state.id == -1) {
+        if (data_state.warna == CSTATE && data_state.id == -1) {
           pop(s_center, top_center);
           display(s_center, &top_center, items_center);
         }
       });
-  auto _center =
-      make_app_child(center_buttons, center_stack_view, Color::DeepSkyBlue3);
+  auto _center = make_app_child(center_buttons, center_stack_view, C3);
 
   display(s_right, &top_right, items_right);
   auto right_stack_view =
       Renderer([&] { return flexbox(items_right, flexbox_opt); });
   auto right_buttons = make_buttons(
       [&] {
-        if (data_state.warna != Color::LightCyan3) {
+        if (data_state.warna != CSTATE) {
           push(s_right, top_right, data_state);
           display(s_right, &top_right, items_right);
         }
       },
       [&] {
-        if (data_state.warna == Color::LightCyan3 && data_state.id == -1) {
+        if (data_state.warna == CSTATE && data_state.id == -1) {
           pop(s_right, top_right);
           display(s_right, &top_right, items_right);
         }
       });
-  auto right =
-      make_app_child(right_buttons, right_stack_view, Color::Green3Bis);
+  auto right = make_app_child(right_buttons, right_stack_view, C2);
 
   auto response_box = Renderer([&] { return hbox({text(response)}); });
   auto stack = Container::Horizontal({left, _center, right});
